@@ -1,0 +1,140 @@
+const { logger } = require("@simpleanalytics/common");
+
+const { query } = require("../db/sqlite");
+const { launch } = require("../lib/puppeteer");
+const { getMetaTags } = require("../lib/utils");
+
+const hackernews = require("./hackernews");
+const googlealerts = require("./googlealerts");
+
+module.exports = async () => {
+  let cluster = null;
+
+  try {
+    cluster = await launch({ maxConcurrency: 10 });
+
+    const articles = [];
+
+    try {
+      articles.push(...(await hackernews()));
+    } catch (error) {
+      logger.error(error);
+    }
+
+    try {
+      articles.push(...(await googlealerts()));
+    } catch (error) {
+      logger.error(error);
+    }
+
+    const wheres = articles.map(({ platform_id, platform_name }) => {
+      return `(platform_id = '${platform_id}' AND platform_name = '${platform_name}')`;
+    });
+
+    const savedArticles = await query(
+      `
+        SELECT
+          *
+        FROM
+          articles
+        WHERE
+          ${wheres.join(" OR ")}
+      `
+    );
+
+    for (const article of articles) {
+      const savedArticle = savedArticles.find(
+        ({ platform_name, platform_id }) =>
+          platform_id === article.platform_id &&
+          platform_name === article.platform_name
+      );
+
+      if (
+        savedArticle &&
+        article.platform_points === savedArticle.platform_points &&
+        article.platform_title === savedArticle.platform_title &&
+        article.website_link === savedArticle.website_link &&
+        article.platform_rank >= savedArticle.platform_rank
+      ) {
+        continue;
+      } else if (savedArticle) {
+        const rank = Math.min(
+          savedArticle.platform_rank,
+          article.platform_rank
+        );
+        await query(
+          `
+            UPDATE
+              articles
+            SET
+              platform_rank = ?,
+              platform_points = ?,
+              platform_title = ?,
+              website_link = ?
+            WHERE
+              platform_name = ?
+              AND platform_id = ?
+          `,
+          rank,
+          article.platform_points,
+          article.platform_title,
+          article.website_link,
+          article.platform_name,
+          article.platform_id
+        );
+      } else if (!savedArticle) {
+        let title = null;
+        let description = null;
+
+        const isHackerNews =
+          article.platform_name === "hackernews" &&
+          article.website_link?.startsWith("https://news.ycombinator.com/");
+
+        if (!isHackerNews) {
+          try {
+            const meta = await cluster.execute(
+              article.website_link,
+              getMetaTags
+            );
+            if (meta.title) title = meta.title;
+            if (meta.description) description = meta.description;
+          } catch (error) {
+            logger.error(error);
+          }
+        }
+
+        await query(
+          `
+            INSERT INTO articles
+              (
+                "platform_name",
+                "platform_id",
+                "platform_rank",
+                "platform_title",
+                "website_link",
+                "platform_points",
+                "website_title",
+                "website_description"
+              )
+            VALUES
+              (?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+          article.platform_name,
+          article.platform_id,
+          article.platform_rank,
+          article.platform_title,
+          article.website_link,
+          article.platform_points,
+          title,
+          description
+        );
+      }
+    }
+  } catch (error) {
+    logger.error(error);
+  } finally {
+    if (!cluster) return;
+    await cluster.idle();
+    await cluster.close();
+  }
+};

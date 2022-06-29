@@ -1,0 +1,34 @@
+{
+  "name": "news-alerts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "./node_modules/.bin/nodemon --trace-warnings -r dotenv/config index.js",
+    "deploy": "./deploy.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simpleanalytics/news-alerts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/simpleanalytics/news-alerts/issues"
+  },
+  "homepage": "https://github.com/simpleanalytics/news-alerts#readme",
+  "dependencies": {
+    "@simpleanalytics/common": "^1.3.39",
+    "fast-xml-parser": "^4.0.8",
+    "puppeteer": "^15.2.0",
+    "puppeteer-cluster": "^0.23.0",
+    "puppeteer-extra": "^3.3.0",
+    "puppeteer-extra-plugin-stealth": "^2.10.1",
+    "sqlite3": "^5.0.8"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.1",
+    "nodemon": "^1.3.3"
+  }
+}
