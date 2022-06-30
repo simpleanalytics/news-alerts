@@ -3,7 +3,7 @@
 set -eum
 
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | sed 's/\r$//' | awk '/=/ {print $1}' )
+  export $(grep -v '^#' .env | sed 's/\r$//' | awk '/=/ {print $1}' )
 else
   echo "=> Preparing deploy"
   echo "Can not find .env variables"
@@ -16,7 +16,7 @@ rm -f app.zip
 
 zip -r -q app.zip . -x node_modules/\* -x .\* -x \*.zip -x \*.db
 
-echo "=> Uploading server part via SSH"
+echo "=> Uploading to server"
 
 current_date=$(date +"%Y-%m-%d")
 scp -q -o LogLevel=QUIET app.zip "$SSH_SERVER:$SSH_FOLDER/$current_date-app.zip"
@@ -28,7 +28,7 @@ if ! [[ $prompt == "y" ]]; then
   exit 0
 fi
 
-echo "=> Deploying"
+echo "=> Deploying on server"
 echo
 command="cd $SSH_FOLDER && unzip -q -o $current_date-app.zip && npm install --production && pm2 restart news-alerts"
 ssh "$SSH_SERVER" 'bash -i -c "'$command'"'
