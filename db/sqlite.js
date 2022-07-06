@@ -17,6 +17,7 @@ function createTables(db, resolve, reject) {
         website_link TEXT NOT NULL,
         website_title TEXT,
         website_description TEXT,
+        keywords TEXT,
         first_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         alerted_at TIMESTAMP
       );
@@ -26,6 +27,10 @@ function createTables(db, resolve, reject) {
     `,
     (error) => {
       if (error) return reject(error);
+
+      // Add column and lett is fail when it already exists
+      db.exec("ALTER TABLE articles ADD COLUMN keywords TEXT;", () => {});
+
       return resolve(db);
     }
   );
@@ -40,7 +45,6 @@ const getDatabase = () =>
         if (error) {
           reject(error);
         } else if (error === null) {
-          // resolve(db);
           return createTables(db, resolve, reject);
         } else {
           reject(new Error("Unknown sqlite3 error"));

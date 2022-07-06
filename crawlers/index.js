@@ -6,6 +6,7 @@ const { getMetaTags } = require("../lib/utils");
 
 const hackernews = require("./hackernews");
 const googlealerts = require("./googlealerts");
+const { getKeywordsAI } = require("../lib/openai");
 
 module.exports = async () => {
   let cluster = null;
@@ -103,6 +104,8 @@ module.exports = async () => {
           }
         }
 
+        const keywords = await getKeywordsAI({ link: article.website_link });
+
         await query(
           `
             INSERT INTO articles
@@ -114,10 +117,11 @@ module.exports = async () => {
                 "website_link",
                 "platform_points",
                 "website_title",
-                "website_description"
+                "website_description",
+                "keywords"
               )
             VALUES
-              (?, ?, ?, ?, ?, ?, ?, ?)
+              (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           article.platform_name,
           article.platform_id,
@@ -126,7 +130,8 @@ module.exports = async () => {
           article.website_link,
           article.platform_points,
           title,
-          description
+          description,
+          keywords.join(",")
         );
       }
     }
