@@ -24,7 +24,7 @@ const getFeed = async (url) => {
     return [];
   }
 
-  const alerts = json?.feed?.entry?.map((entry) => {
+  const alerts = json?.feed?.entry?.map?.((entry) => {
     const { searchParams } = new URL(entry?.link[`${PREFIX}href`]);
     return {
       platform_name: "googlealerts",
