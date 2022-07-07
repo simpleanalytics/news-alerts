@@ -17,13 +17,17 @@ module.exports = async () => {
     const articles = [];
 
     try {
-      articles.push(...(await hackernews()));
+      const hackernewsArticles = await hackernews();
+      if (Array.isArray(hackernewsArticles))
+        articles.push(...hackernewsArticles);
     } catch (error) {
       logger.error(error);
     }
 
     try {
-      articles.push(...(await googlealerts()));
+      const googlealertsArticles = await googlealerts();
+      if (Array.isArray(googlealertsArticles))
+        articles.push(...googlealertsArticles);
     } catch (error) {
       logger.error(error);
     }
