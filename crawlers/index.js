@@ -1,12 +1,15 @@
 const { logger } = require("@simpleanalytics/common");
 
 const { query } = require("../db/sqlite");
-const { launch } = require("../lib/puppeteer");
-const { getMetaTags } = require("../lib/utils");
+const {
+  launch,
+  getPageTextContents,
+  getMetaTags,
+} = require("../lib/puppeteer");
 
 const hackernews = require("./hackernews");
 const googlealerts = require("./googlealerts");
-const { getKeywordsAI } = require("../lib/openai");
+const { getKeywordsAI, interestingIndexArticle } = require("../lib/openai");
 
 module.exports = async () => {
   let cluster = null;
@@ -108,7 +111,19 @@ module.exports = async () => {
           }
         }
 
-        const keywords = await getKeywordsAI({ link: article.website_link });
+        const content = await getPageTextContents({
+          link: article.website_link,
+          cluster,
+        });
+
+        const keywords = await getKeywordsAI({
+          link: article.website_link,
+          content: content?.slice?.(0, 3000) || "",
+        });
+
+        const interesting = await interestingIndexArticle({
+          content: content?.slice?.(0, 3000) || "",
+        });
 
         await query(
           `
@@ -122,10 +137,12 @@ module.exports = async () => {
                 "platform_points",
                 "website_title",
                 "website_description",
-                "keywords"
+                "keywords",
+                "interesting_index",
+                "interesting_reason"
               )
             VALUES
-              (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           article.platform_name,
           article.platform_id,
@@ -135,7 +152,9 @@ module.exports = async () => {
           article.platform_points,
           title,
           description,
-          keywords.join(",")
+          keywords.join(","),
+          interesting.index,
+          interesting.reason
         );
       }
     }
