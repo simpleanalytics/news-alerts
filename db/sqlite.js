@@ -18,6 +18,8 @@ function createTables(db, resolve, reject) {
         website_title TEXT,
         website_description TEXT,
         keywords TEXT,
+        interesting_reason TEXT,
+        interesting_index INTEGER,
         first_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         alerted_at TIMESTAMP
       );
@@ -28,8 +30,15 @@ function createTables(db, resolve, reject) {
     (error) => {
       if (error) return reject(error);
 
-      // Add column and lett is fail when it already exists
-      db.exec("ALTER TABLE articles ADD COLUMN keywords TEXT;", () => {});
+      // Add column and silently fail when it already exists
+      db.exec(
+        "ALTER TABLE articles ADD COLUMN interesting_reason TEXT;",
+        () => {}
+      );
+      db.exec(
+        "ALTER TABLE articles ADD COLUMN interesting_index INTEGER;",
+        () => {}
+      );
 
       return resolve(db);
     }

@@ -1,8 +1,9 @@
 require("dotenv").config();
 
+const { ms, logger } = require("@simpleanalytics/common");
+
 const crawlers = require("./crawlers/index");
 const notify = require("./lib/notify");
-const { ms, logger } = require("@simpleanalytics/common");
 const { loop } = require("./lib/utils");
 const { sendmessage } = require("./lib/telegram");
 
