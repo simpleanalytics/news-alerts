@@ -122,6 +122,7 @@ module.exports = async () => {
         });
 
         const interesting = await interestingIndexArticle({
+          link: article.website_link,
           content: content?.slice?.(0, 3000) || "",
         });
 
