@@ -7,7 +7,9 @@ const notify = require("./lib/notify");
 const { loop } = require("./lib/utils");
 const { sendmessage } = require("./lib/telegram");
 
-const { NODE_ENV = "development" } = process.env;
+const { NODE_ENV = "development", INTERESTING_THRESHOLD } = process.env;
+
+if (!INTERESTING_THRESHOLD) throw new Error("INTERESTING_THRESHOLD is not set");
 
 (async () => {
   if (NODE_ENV === "production") {
