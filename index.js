@@ -5,7 +5,8 @@ const { ms, logger } = require("@simpleanalytics/common");
 const crawlers = require("./crawlers/index");
 const notify = require("./lib/notify");
 const { loop } = require("./lib/utils");
-const { sendmessage } = require("./lib/telegram");
+const { sendToTelegram } = require("./lib/telegram");
+const { sendToMattermost } = require("./lib/mattermost");
 
 const { NODE_ENV = "development", INTERESTING_THRESHOLD } = process.env;
 
@@ -31,7 +32,12 @@ if (!INTERESTING_THRESHOLD) throw new Error("INTERESTING_THRESHOLD is not set");
       logger.error(error);
     }
 
-    sendmessage(message, { silent: true });
+    // Telegram
+    sendToTelegram(message, { silent: true });
+
+    // Mattermost (send plain text)
+    const mattermostMessage = message.replace(/<[^>]+>/g, "");
+    sendToMattermost(mattermostMessage);
   }
 
   loop(crawlers, { interval: ms.second * 90 });
