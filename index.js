@@ -15,6 +15,7 @@ if (!INTERESTING_THRESHOLD) throw new Error("INTERESTING_THRESHOLD is not set");
 (async () => {
   if (NODE_ENV === "production") {
     let message = "News alerts app just started up";
+    let mattermostMessage = message;
     try {
       const current = require("./commits/current.json");
       const previous = require("./commits/previous.json");
@@ -26,17 +27,19 @@ if (!INTERESTING_THRESHOLD) throw new Error("INTERESTING_THRESHOLD is not set");
 
       const commit = current?.message?.replace(/-/g, " ");
       message = `Deployed "${commit}" ${
-        url ? `<a href="${url}">GitHub</a>` : ""
+        url ? `<a href="${url}">GitHub commit</a>` : ""
+      }`;
+      mattermostMessage = `Deployed "${commit}" ${
+        url ? `[GitHub commit](${url})` : ""
       }`;
     } catch (error) {
       logger.error(error);
     }
 
-    // Telegram
+    // Telegram (send HTML)
     sendToTelegram(message, { silent: true });
 
-    // Mattermost (send plain text)
-    const mattermostMessage = message.replace(/<[^>]+>/g, "");
+    // Mattermost (send markdown)
     sendToMattermost(mattermostMessage);
   }
 
